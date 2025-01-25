@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>KET 模拟考试</title>
+    <style>
+        .question {
+            margin-bottom: 20px;
+        }
+        .speaking-question {
+            background-color: #f9f9f9;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        audio {
+            width: 100%;
+            margin-top: 10px;
+        }
+        img {
+            width: 100%;
+            max-width: 500px;
+            margin-top: 10px;
+        }
+        .loading {
+            display: none;
+            color: blue;
+            font-weight: bold;
+        }
+        textarea {
+            width: 100%;
+            height: 150px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>KET 模拟考试</h1>
+    <form action="/submit" method="post" enctype="multipart/form-data" onsubmit="handleSubmit(event)">
+        {% for q in questions %}
+        <div class="question">
+            <p><strong>Question {{ loop.index }}:</strong> {{ q.question }}</p>
+            {% if q.type == "reading_multiple_choice" %}
+                {% for option in q.options %}
+                <label>
+                    <input type="radio" name="q{{ loop.index0 }}" value="{{ option }}"> {{ option }}
+                </label><br>
+                {% endfor %}
+            {% elif q.type == "listening_multiple_choice" %}
+                {% for option in q.options %}
+                <label>
+                    <input type="radio" name="q{{ loop.index0 }}" value="{{ option }}"> {{ option }}
+                </label><br>
+                {% endfor %}
+            {% elif q.type == "reading_fill_in_blank" %}
+                <input type="text" name="q{{ loop.index0 }}_text" placeholder="Your answer">
+            {% elif q.type == "listening_short_answer" %}
+                <input type="text" name="q{{ loop.index0 }}_text" placeholder="Your answer">
+            {% elif q.type == "writing_essay" %}
+                <textarea name="q{{ loop.index0 }}_writing" placeholder="Write your essay here (100-150 words)..."></textarea>
+            {% elif q.type.startswith("speaking_") %}
+                <div class="speaking-question">
+                    <p><em>This is a speaking question. Record your answer below.</em></p>
+                    {% if q.image %}
+                        <img src="{{ url_for('static', filename=q.image) }}" alt="Picture for speaking question">
+                    {% endif %}
+                    <button type="button" class="recordButton" data-question-index="{{ loop.index0 }}">Start Recording</button>
+                    <button type="button" class="stopButton" data-question-index="{{ loop.index0 }}" disabled>Stop Recording</button>
+                    <audio class="audioPlayer" controls data-question-index="{{ loop.index0 }}"></audio>
+                    <input type="hidden" name="q{{ loop.index0 }}_audio" class="audioInput" data-question-index="{{ loop.index0 }}">
+                </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+        <button type="submit" id="submitButton">提交</button>
+        <span id="loadingMessage" class="loading">提交中，请稍候...</span>
+    </form>
+
+    <script>
+        let mediaRecorders = {};
+        let audioChunks = {};
+
+        document.querySelectorAll('.recordButton').forEach(button => {
+            button.addEventListener('click', async () => {
+                const questionIndex = button.getAttribute('data-question-index');
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorders[questionIndex] = new MediaRecorder(stream);
+                audioChunks[questionIndex] = [];
+
+                mediaRecorders[questionIndex].ondataavailable = (event) => {
+                    audioChunks[questionIndex].push(event.data);
+                };
+
+                mediaRecorders[questionIndex].onstop = () => {
+                    const audioBlob = new Blob(audioChunks[questionIndex], { type: 'audio/wav' });
+                    const audioUrl = URL.createObjectURL(audioBlob);
+                    const audioPlayer = document.querySelector(`.audioPlayer[data-question-index="${questionIndex}"]`);
+                    const audioInput = document.querySelector(`.audioInput[data-question-index="${questionIndex}"]`);
+
+                    // 将音频文件转换为 Base64 编码，以便随表单提交
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                        audioInput.value = reader.result.split(',')[1]; // 提取 Base64 数据部分
+                    };
+                    reader.readAsDataURL(audioBlob);
+
+                    audioPlayer.src = audioUrl;
+                };
+
+                mediaRecorders[questionIndex].start();
+
+                // 设置最大录音时长为 60 秒
+                setTimeout(() => {
+                    if (mediaRecorders[questionIndex].state === 'recording') {
+                        mediaRecorders[questionIndex].stop();
+                        document.querySelector(`.recordButton[data-question-index="${questionIndex}"]`).disabled = false;
+                        document.querySelector(`.stopButton[data-question-index="${questionIndex}"]`).disabled = true;
+                    }
+                }, 60000);  // 60 秒
+
+                button.disabled = true;
+                document.querySelector(`.stopButton[data-question-index="${questionIndex}"]`).disabled = false;
+            });
+        });
+
+        document.querySelectorAll('.stopButton').forEach(button => {
+            button.addEventListener('click', () => {
+                const questionIndex = button.getAttribute('data-question-index');
+                mediaRecorders[questionIndex].stop();
+                document.querySelector(`.recordButton[data-question-index="${questionIndex}"]`).disabled = false;
+                button.disabled = true;
+            });
+        });
+
+        function handleSubmit(event) {
+            const submitButton = document.getElementById('submitButton');
+            const loadingMessage = document.getElementById('loadingMessage');
+
+            // 禁用提交按钮，防止重复提交
+            submitButton.disabled = true;
+            loadingMessage.style.display = 'inline';
+
+            // 如果表单验证失败，重新启用提交按钮
+            if (!event.target.checkValidity()) {
+                submitButton.disabled = false;
+                loadingMessage.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>

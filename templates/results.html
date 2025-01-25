@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>考试结果</title>
+    <style>
+        .result {
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .correct {
+            color: green;
+        }
+        .incorrect {
+            color: red;
+        }
+        .score {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        .question {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .answer {
+            margin-left: 20px;
+        }
+        .errors {
+            margin-left: 20px;
+            color: #d9534f;
+        }
+        .transcribed-text {
+            margin-left: 20px;
+            color: #5bc0de;
+        }
+    </style>
+</head>
+<body>
+    <h1>考试结果</h1>
+    <div class="score">你的得分是: {{ score }}/{{ total }}</div>
+    {% for result in results %}
+    <div class="result">
+        <div class="question">{{ result.question }}</div>
+        {% if result.user_answer is defined and result.correct_answer is defined %}
+            <div class="answer">
+                <strong>你的答案:</strong> {{ result.user_answer }}
+            </div>
+            <div class="answer">
+                <strong>正确答案:</strong> {{ result.correct_answer }}
+            </div>
+            {% if result.user_answer == result.correct_answer %}
+                <div class="correct">正确！</div>
+            {% else %}
+                <div class="incorrect">错误！</div>
+            {% endif %}
+        {% elif result.errors is defined %}
+            <div class="answer">
+                <strong>你的作文:</strong> {{ result.user_answer }}
+            </div>
+            <div class="errors">
+                <strong>语法错误:</strong>
+                <ul>
+                    {% for error in result.errors %}
+                    <li>{{ error.message }} (建议修改: {{ error.replacements }})</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <div class="answer">
+                <strong>作文得分:</strong> {{ result.score }}/10
+            </div>
+        {% elif result.transcribed_text is defined %}
+            <div class="transcribed-text">
+                <strong>语音转文本:</strong> {{ result.transcribed_text }}
+            </div>
+            <div class="answer">
+                <strong>口语得分:</strong> {{ result.score }}/10
+            </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+</body>
+</html>
