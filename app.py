@@ -23,17 +23,19 @@ questions = [
         "type": "listening_multiple_choice",
         "question": "What time does the train leave?",
         "options": ["10:05", "10:15", "10:50"],
-        "answer": "10:15"
+        "answer": "10:15",
+        "audio": "audio_q1.wav"  # 音频文件路径
+    },
+    {
+        "type": "listening_short_answer",
+        "question": "1. Where is the woman going for her holiday? 2. How long will she stay there?",
+        "answer": "1. Spain 2. Two weeks",
+        "audio": "audio_q2.wav"  # 音频文件路径
     },
     {
         "type": "reading_fill_in_blank",
         "question": "Complete the sentence: 'I usually go to school ______ bus.'",
         "answer": "by"
-    },
-    {
-        "type": "listening_short_answer",
-        "question": "1. Where is the woman going for her holiday? 2. How long will she stay there?",
-        "answer": "1. Spain 2. Two weeks"
     },
     {
         "type": "writing_essay",
