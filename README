@@ -117,7 +117,8 @@ ket_exam_app/
 ├── static/               # 静态文件（CSS、JS、图片等）
 │   └── styles.css
 ├── templates/            # HTML 模板文件
-│   └── index.html
+│   └── index.html       # 主页面
+│   └── results.html     # 考试结果页面
 ├── uploads/              # 上传文件存储目录
 └── README.md             # 项目说明文档
 ```
