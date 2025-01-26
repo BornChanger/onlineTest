@@ -30,6 +30,19 @@
             height: 150px;
             margin-top: 10px;
         }
+        .charCount {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+        .charCount.warning {
+            color: red;
+        }
+        .timer {
+            font-weight: bold;
+            color: #333;
+            margin-top: 5px;
+        }
     </style>
 </head>
 <body>
@@ -56,6 +69,7 @@
                 <input type="text" name="q{{ loop.index0 }}_text" placeholder="Your answer">
             {% elif q.type == "writing_essay" %}
                 <textarea name="q{{ loop.index0 }}_writing" placeholder="Write your essay here (100-150 words)..."></textarea>
+                <div class="charCount">0 / 150 characters</div>
             {% elif q.type.startswith("speaking_") %}
                 <div class="speaking-question">
                     <p><em>This is a speaking question. Record your answer below.</em></p>
@@ -64,6 +78,7 @@
                     {% endif %}
                     <button type="button" class="recordButton" data-question-index="{{ loop.index0 }}">Start Recording</button>
                     <button type="button" class="stopButton" data-question-index="{{ loop.index0 }}" disabled>Stop Recording</button>
+                    <div class="timer" data-question-index="{{ loop.index0 }}"></div>
                     <audio class="audioPlayer" controls data-question-index="{{ loop.index0 }}"></audio>
                     <input type="hidden" name="q{{ loop.index0 }}_audio" class="audioInput" data-question-index="{{ loop.index0 }}">
                 </div>
@@ -78,9 +93,38 @@
         let mediaRecorders = {};
         let audioChunks = {};
 
+        // 字数统计
+        document.querySelectorAll('textarea').forEach(textarea => {
+            const charCount = textarea.nextElementSibling;
+            textarea.addEventListener('input', () => {
+                const length = textarea.value.length;
+                charCount.textContent = `${length} / 150 characters`;
+                if (length > 150) {
+                    charCount.classList.add('warning');
+                } else {
+                    charCount.classList.remove('warning');
+                }
+            });
+        });
+
+        // 录音功能
         document.querySelectorAll('.recordButton').forEach(button => {
             button.addEventListener('click', async () => {
                 const questionIndex = button.getAttribute('data-question-index');
+                const timerDisplay = document.querySelector(`.timer[data-question-index="${questionIndex}"]`);
+
+                // 设置倒计时
+                let timeLeft = 60; // 60 秒
+                timerDisplay.textContent = `Time left: ${timeLeft} seconds`;
+                const timer = setInterval(() => {
+                    timeLeft--;
+                    timerDisplay.textContent = `Time left: ${timeLeft} seconds`;
+                    if (timeLeft <= 0) {
+                        clearInterval(timer);
+                    }
+                }, 1000);
+
+                // 开始录音
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 mediaRecorders[questionIndex] = new MediaRecorder(stream);
                 audioChunks[questionIndex] = [];
@@ -95,14 +139,16 @@
                     const audioPlayer = document.querySelector(`.audioPlayer[data-question-index="${questionIndex}"]`);
                     const audioInput = document.querySelector(`.audioInput[data-question-index="${questionIndex}"]`);
 
-                    // 将音频文件转换为 Base64 编码，以便随表单提交
+                    // 将音频文件转换为 Base64 编码
                     const reader = new FileReader();
                     reader.onload = () => {
-                        audioInput.value = reader.result.split(',')[1]; // 提取 Base64 数据部分
+                        audioInput.value = reader.result.split(',')[1];
                     };
                     reader.readAsDataURL(audioBlob);
 
                     audioPlayer.src = audioUrl;
+                    clearInterval(timer); // 停止倒计时
+                    timerDisplay.textContent = ''; // 清空倒计时显示
                 };
 
                 mediaRecorders[questionIndex].start();
