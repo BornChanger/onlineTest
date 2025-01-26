@@ -27,15 +27,15 @@ questions = [
         "audio": "audio_q1.wav"  # 音频文件路径
     },
     {
+        "type": "reading_fill_in_blank",
+        "question": "Complete the sentence: 'I usually go to school ______ bus.'",
+        "answer": "by"
+    },
+    {
         "type": "listening_short_answer",
         "question": "1. Where is the woman going for her holiday? 2. How long will she stay there?",
         "answer": "1. Spain 2. Two weeks",
         "audio": "audio_q2.wav"  # 音频文件路径
-    },
-    {
-        "type": "reading_fill_in_blank",
-        "question": "Complete the sentence: 'I usually go to school ______ bus.'",
-        "answer": "by"
     },
     {
         "type": "writing_essay",
@@ -49,7 +49,7 @@ questions = [
     },
     {
         "type": "speaking_picture_description",
-        "question": "Describe the picture. (假设图片是一个公园，有孩子和狗在玩耍)",
+        "question": "Describe the picture. (假设图片是一个公园，有孩子在踢足球)",
         "answer": "In the picture, there is a park. Some children are playing football, and a dog is running near them. The weather is sunny, and there are many trees in the park.",
         "image": "park.png"
     }
@@ -109,25 +109,45 @@ def submit():
     for i in range(len(questions)):
         q = questions[i]
         if q["type"] == "reading_multiple_choice":
-            user_answer = request.form.get(f'q{i}')  # 直接使用题目的索引作为名称
-            if user_answer == q['answer']:
+            user_answer = request.form.get(f'q{i}')  # 获取用户选择的答案
+            if user_answer == q['answer']:  # 与正确答案比较
                 score += 1
-            results.append({"question": q["question"], "user_answer": user_answer, "correct_answer": q["answer"]})
+            results.append({
+                "question": q["question"],
+                "user_answer": user_answer,
+                "correct_answer": q["answer"],
+                "is_correct": user_answer == q['answer']
+            })
         elif q["type"] == "listening_multiple_choice":
-            user_answer = request.form.get(f'q{i}')  # 直接使用题目的索引作为名称
-            if user_answer == q['answer']:
+            user_answer = request.form.get(f'q{i}')  # 获取用户选择的答案
+            if user_answer == q['answer']:  # 与正确答案比较
                 score += 1
-            results.append({"question": q["question"], "user_answer": user_answer, "correct_answer": q["answer"]})
+            results.append({
+                "question": q["question"],
+                "user_answer": user_answer,
+                "correct_answer": q["answer"],
+                "is_correct": user_answer == q['answer']
+            })
         elif q["type"] == "reading_fill_in_blank":
             user_answer = request.form.get(f'q{i}_text')
             if user_answer.lower() == q['answer'].lower():
                 score += 1
-            results.append({"question": q["question"], "user_answer": user_answer, "correct_answer": q["answer"]})
+            results.append({
+                "question": q["question"],
+                "user_answer": user_answer,
+                "correct_answer": q["answer"],
+                "is_correct": user_answer.lower() == q['answer'].lower()
+            })
         elif q["type"] == "listening_short_answer":
             user_answer = request.form.get(f'q{i}_text')
             if user_answer.lower() == q['answer'].lower():
                 score += 1
-            results.append({"question": q["question"], "user_answer": user_answer, "correct_answer": q["answer"]})
+            results.append({
+                "question": q["question"],
+                "user_answer": user_answer,
+                "correct_answer": q["answer"],
+                "is_correct": user_answer.lower() == q['answer'].lower()
+            })
         elif q["type"] == "writing_essay":
             user_answer = request.form.get(f'q{i}_writing')
             grammar_result = check_grammar_with_languagetool(user_answer)
