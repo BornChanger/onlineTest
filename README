@@ -1,4 +1,4 @@
-# KET Exam App
+# Online English Test
 
 这是一个用于英语考试的应用程序，支持语音识别和答案提交功能。
 
@@ -111,7 +111,7 @@ pip install -r requirements.txt
 ## 项目结构
 
 ```
-ket_exam_app/
+onlineTest/
 ├── app.py                # 主应用程序文件
 ├── requirements.txt      # 依赖库列表
 ├── static/               # 静态文件（CSS、JS、图片等）
